@@ -1,4 +1,4 @@
-package com.example.myapplication45.ui.theme
+package mini.remote.deck.project.hobby.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

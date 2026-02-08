@@ -1,6 +1,5 @@
-package com.example.myapplication45.ui.theme
+package mini.remote.deck.project.hobby.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

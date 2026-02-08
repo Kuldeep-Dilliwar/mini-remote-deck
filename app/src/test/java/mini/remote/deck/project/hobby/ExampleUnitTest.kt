@@ -1,4 +1,4 @@
-package com.example.myapplication45
+package mini.remote.deck.project.hobby
 
 import org.junit.Test
 

@@ -1,4 +1,4 @@
-package com.example.myapplication45
+package mini.remote.deck.project.hobby
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -44,8 +44,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.view.WindowCompat
@@ -59,9 +57,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.myapplication45.ui.theme.MyApplication45Theme
+import mini.remote.deck.project.hobby.ui.theme.MyApplication45Theme
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -77,6 +74,7 @@ import okio.BufferedSink
 import java.io.InputStream
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.collections.iterator
 
 
 object ConfigManager {
@@ -108,7 +106,7 @@ object ConfigManager {
         val json = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getString(KEY_PROFILES, null)
         return if (json != null) {
-            val type = object : TypeToken<List<RemoteProfile>>() {}.type
+            val type = object : com.google.gson.reflect.TypeToken<List<RemoteProfile>>() {}.type
             Gson().fromJson(json, type)
         } else {
             emptyList()

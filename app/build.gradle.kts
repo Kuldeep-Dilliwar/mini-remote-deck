@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.myapplication45"
+    namespace = "mini.remote.deck.project.hobby"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.myapplication45"
+        applicationId = "mini.remote.deck.project.hobby"
         minSdk = 23
         targetSdk = 35
         versionCode = 1

@@ -31,7 +31,7 @@
                 android:resource="@xml/filepaths" />
         </provider>
 
-        <activity android:name=".ShareReceiverActivity"
+        <activity android:name="mini.remote.deck.project.hobby.ShareReceiverActivity"
             android:exported="true"
             android:label="@string/share_receiver_label">
             <intent-filter>
@@ -47,7 +47,7 @@
         </activity>
 
         <activity
-            android:name=".MainActivity"
+            android:name="mini.remote.deck.project.hobby.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.MyApplication45">
             <intent-filter>

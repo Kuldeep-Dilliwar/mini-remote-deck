@@ -28,15 +28,15 @@
 
 
 # Keep model classes from being obfuscated
--keepclassmembers class com.example.myapplication45.CharacterRequest {
+-keepclassmembers class mini.remote.deck.project.hobby.CharacterRequest {
     <fields>;
 }
--keepclassmembers class com.example.myapplication45.CharacterRequest {
+-keepclassmembers class mini.remote.deck.project.hobby.CharacterRequest {
     <fields>;
 }
--keepclassmembers class com.example.myapplication45.CharacterRequest {
+-keepclassmembers class mini.remote.deck.project.hobby.CharacterRequest {
     <fields>;
 }
--keepclassmembers class com.example.myapplication45.CharacterRequest {
+-keepclassmembers class mini.remote.deck.project.hobby.CharacterRequest {
     <fields>;
 }
