@@ -48,6 +48,7 @@ jobs:
       # This is the part that was missing or incorrect before
       - name: Build Release APK
         env:
+          BUILD_VERSION_NAME: ${{ github.ref_name }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
