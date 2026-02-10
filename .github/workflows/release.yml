@@ -37,15 +37,12 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 1. Decode the Keystore File into the 'app' folder
       - name: Decode Keystore
         env:
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
         run: |
           echo "$KEYSTORE_FILE" | base64 --decode > app/release.keystore
 
-      # 2. Build Release APK (PASS SECRETS HERE)
-      # This is the part that was missing or incorrect before
       - name: Build Release APK
         env:
           BUILD_VERSION_NAME: ${{ github.ref_name }}
@@ -54,7 +51,6 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease
         
-      # 3. Upload All APKs (Universal + Splits) to Release
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
@@ -64,7 +60,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ======================================================
-  # JOB 2: Build Windows Python EXE
+  # JOB 2: Build Windows Python EXE & ZIP
   # ======================================================
   windows-exe-build:
     name: Build Windows EXE
@@ -89,10 +85,15 @@ jobs:
           cd python
           pyinstaller --noconsole --onefile --name "RemoteDeckServer" --hidden-import=python_multipart --hidden-import=pystray --hidden-import=PIL --hidden-import=uvicorn main.py
 
-      - name: Upload EXE to Release
+      - name: Zip the Executable
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "python/dist/RemoteDeckServer.exe" -DestinationPath "python/dist/RemoteDeckServer-Windows.zip"
+
+      - name: Upload Zip to Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: python/dist/RemoteDeckServer.exe
+          files: python/dist/RemoteDeckServer-Windows.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
