@@ -26,8 +26,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
@@ -796,60 +798,110 @@ fun ProfilesScreen(
                 }
             }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(gridCells),
-                modifier = Modifier.fillMaxSize().padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp)
+                    .verticalScroll(rememberScrollState()) // usage of scroll state
             ) {
-                var i = 0
-                while (i < totalCells) {
-                    val row = i / gridCells
-                    val col = i % gridCells
-                    val position = GridPosition(row, col)
-                    val widget = placedWidgets[position]
+                // Calculate precise cell sizes
+                val gap = 8.dp
+                val colCount = 4
+                val rowCount = 8
 
-                    if (widget != null) {
-                        item(
-                            key = widget.id,
-                            span = { GridItemSpan(widget.size.width) }
-                        ) {
-                            val widgetHeight = (widget.size.height * 100) + ((widget.size.height - 1) * 8)
-                            Box(modifier = Modifier.height(widgetHeight.dp)) {
-                                when (widget.script.interactionType) {
-                                    "button_tap" -> WidgetButton(widget = widget, isEditMode = isEditMode, onClick = {
-                                        val command = widget.script.commands["on_tap"]
-                                        if (command?.type == "local_action" && command.payload["action"] == "upload_file") {
-                                            filePickerLauncher.launch(arrayOf("*/*"))
-                                        } else {
-                                            command?.let { viewModel.executeCommand(it) }
-                                        }
-                                    },
-                                        onDelete = { widgetId -> viewModel.deleteWidget(widgetId) }
-                                    )
-                                    "drag_area" -> DragSurfaceWidget(widget = widget, isEditMode = isEditMode, onDrag = { dx, dy -> viewModel.onMoveMouse(dx, dy) }, onDelete = { widgetId -> viewModel.deleteWidget(widgetId) })
-                                    "v_scroll" -> ScrollSurfaceWidget(widget = widget, isEditMode = isEditMode, onScroll = { dy -> viewModel.onScrollMouse(dy) }, onDelete = { widgetId -> viewModel.deleteWidget(widgetId) })
-                                    "h_scroll" -> ScrollSurfaceWidget(widget = widget, isEditMode = isEditMode, isHorizontal = true, onHScroll = { state, dx -> viewModel.onHorizontalScrollGesture(state, dx) }, onDelete = { widgetId -> viewModel.deleteWidget(widgetId) })"text_input" -> TextInputWidget(widget = widget, isEditMode = isEditMode, onSend = { text -> viewModel.onSendCharacter(text) }, onDelete = { widgetId -> viewModel.deleteWidget(widgetId) })
-                                }
-                            }
-                        }
-                        i += widget.size.width
-                    } else {
-                        if (!occupiedCells.contains(position)) {
-                            if (isEditMode) {
-                                item(key = "empty_${row}_${col}") {
-                                    EmptyGridSlot(position = position) {
-                                        selectedGridPosition = position
+                // Calculate width of a single cell dynamically based on screen width
+                val cellWidth = (maxWidth - (gap * (colCount - 1))) / colCount
+                val cellHeight = 100.dp
+
+                // --- FIX STARTS HERE ---
+                // Calculate the total height of the grid content
+                val totalGridHeight = (cellHeight * rowCount) + (gap * (rowCount - 1))
+
+                // Add an invisible Box that forces the scroll container to be tall enough
+                Box(Modifier.size(width = maxWidth, height = totalGridHeight))
+                // --- FIX ENDS HERE ---
+
+                // LAYER 1: Render Empty Slots (Background)
+                for (r in 0 until rowCount) {
+                    for (c in 0 until colCount) {
+                        val pos = GridPosition(r, c)
+
+                        val xPos = (cellWidth + gap) * c
+                        val yPos = (cellHeight + gap) * r
+
+                        if (!occupiedCells.contains(pos)) {
+                            Box(
+                                modifier = Modifier
+                                    .offset(x = xPos, y = yPos)
+                                    .size(cellWidth, cellHeight)
+                            ) {
+                                if (isEditMode) {
+                                    EmptyGridSlot(position = pos) {
+                                        selectedGridPosition = pos
                                         showWidgetDrawer = true
                                     }
-                                }
-                            } else {
-                                item(key = "placeholder_${row}_${col}") {
-                                    Spacer(Modifier.height(100.dp))
+                                } else {
+                                    Spacer(Modifier.fillMaxSize())
                                 }
                             }
                         }
-                        i++
+                    }
+                }
+
+                // LAYER 2: Render Widgets
+                profile.widgets.forEach { widget ->
+
+                    val xPos = (cellWidth + gap) * widget.position.col
+                    val yPos = (cellHeight + gap) * widget.position.row
+
+                    val totalW = (cellWidth * widget.size.width) + (gap * (widget.size.width - 1))
+                    val totalH = (cellHeight * widget.size.height) + (gap * (widget.size.height - 1))
+
+                    Box(
+                        modifier = Modifier
+                            .offset(x = xPos, y = yPos)
+                            .size(totalW, totalH)
+                    ) {
+                        when (widget.script.interactionType) {
+                            "button_tap" -> WidgetButton(
+                                widget = widget,
+                                isEditMode = isEditMode,
+                                onClick = {
+                                    val command = widget.script.commands["on_tap"]
+                                    if (command?.type == "local_action" && command.payload["action"] == "upload_file") {
+                                        filePickerLauncher.launch(arrayOf("*/*"))
+                                    } else {
+                                        command?.let { viewModel.executeCommand(it) }
+                                    }
+                                },
+                                onDelete = { widgetId -> viewModel.deleteWidget(widgetId) }
+                            )
+                            "drag_area" -> DragSurfaceWidget(
+                                widget = widget,
+                                isEditMode = isEditMode,
+                                onDrag = { dx, dy -> viewModel.onMoveMouse(dx, dy) },
+                                onDelete = { widgetId -> viewModel.deleteWidget(widgetId) }
+                            )
+                            "v_scroll" -> ScrollSurfaceWidget(
+                                widget = widget,
+                                isEditMode = isEditMode,
+                                onScroll = { dy -> viewModel.onScrollMouse(dy) },
+                                onDelete = { widgetId -> viewModel.deleteWidget(widgetId) }
+                            )
+                            "h_scroll" -> ScrollSurfaceWidget(
+                                widget = widget,
+                                isEditMode = isEditMode,
+                                isHorizontal = true,
+                                onHScroll = { state, dx -> viewModel.onHorizontalScrollGesture(state, dx) },
+                                onDelete = { widgetId -> viewModel.deleteWidget(widgetId) }
+                            )
+                            "text_input" -> TextInputWidget(
+                                widget = widget,
+                                isEditMode = isEditMode,
+                                onSend = { text -> viewModel.onSendCharacter(text) },
+                                onDelete = { widgetId -> viewModel.deleteWidget(widgetId) }
+                            )
+                        }
                     }
                 }
             }

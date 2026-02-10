@@ -20,6 +20,7 @@ poiOoxml = "5.2.3"
 retrofit = "2.9.0"
 appcompat = "1.7.0"
 protoliteWellKnownTypes = "18.0.1"
+foundation = "1.10.2"
 
 [libraries]
 accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanistSystemuicontroller" }
@@ -48,6 +49,7 @@ poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poiOoxml" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 protolite-well-known-types = { group = "com.google.firebase", name = "protolite-well-known-types", version.ref = "protoliteWellKnownTypes" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
