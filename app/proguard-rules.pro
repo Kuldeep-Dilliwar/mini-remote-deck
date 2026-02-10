@@ -1,47 +1,28 @@
-# ----------------------------------------------------------------------------
-# 1. FIX BUILD ERRORS (OkHttp Dependencies)
-# ----------------------------------------------------------------------------
-# OkHttp references these, but they are optional. We suppress the warnings
-# so R8 allows the build to finish.
--dontwarn org.bouncycastle.jsse.**
--dontwarn org.bouncycastle.jce.provider.**
--dontwarn org.conscrypt.**
--dontwarn org.openjsse.**
-
-# ----------------------------------------------------------------------------
-# 2. FIX RUNTIME CRASHES (Gson & Reflection)
-# ----------------------------------------------------------------------------
-# Keep Generic Signatures (CRITICAL for Gson TypeToken to work)
+# 1. Keep Generic Signatures for Gson
 -keepattributes Signature
-
-# Keep Annotation info (Required for @Keep, @SerializedName, etc.)
 -keepattributes *Annotation*
+-keepattributes EnclosingMethod
 
-# Keep standard Gson classes
--keep class sun.misc.Unsafe { *; }
--keep class com.google.gson.stream.** { *; }
+# 2. Keep your Data Classes
+# (Ensures R8 doesn't rename fields like 'name' to 'a')
+-keep class mini.remote.deck.project.hobby.** { *; }
 
-# ----------------------------------------------------------------------------
-# 3. PRESERVE YOUR DATA MODELS
-# ----------------------------------------------------------------------------
-# Prevent R8 from renaming the fields in your data classes.
-# If these are renamed, Gson won't find the data when loading from JSON.
+# 3. Keep Gson Internal Logic
+-keep class com.google.gson.** { *; }
+-keep interface com.google.gson.** { *; }
 
--keep class mini.remote.deck.project.hobby.RemoteProfile { *; }
--keep class mini.remote.deck.project.hobby.RemoteWidget { *; }
--keep class mini.remote.deck.project.hobby.WidgetScript { *; }
--keep class mini.remote.deck.project.hobby.GridPosition { *; }
--keep class mini.remote.deck.project.hobby.GridSize { *; }
--keep class mini.remote.deck.project.hobby.Command { *; }
+# FIX: Do NOT use "-keep class sun.misc.Unsafe".
+# Just ignore the warning because this class is part of the OS, not your app.
+-dontwarn sun.misc.Unsafe
+-dontwarn com.google.gson.**
 
-# Request/Response classes used in networking
--keep class mini.remote.deck.project.hobby.CharacterRequest { *; }
--keep class mini.remote.deck.project.hobby.ClickRequest { *; }
--keep class mini.remote.deck.project.hobby.ScrollRequest { *; }
--keep class mini.remote.deck.project.hobby.HScrollGestureRequest { *; }
--keep class mini.remote.deck.project.hobby.KeyPressRequest { *; }
--keep class mini.remote.deck.project.hobby.MediaKeyRequest { *; }
+# 4. Keep Network Libs (Retrofit/OkHttp)
+-dontwarn okhttp3.**
+-dontwarn retrofit2.**
+-dontwarn okio.**
+-keep class retrofit2.** { *; }
 
-# ViewModel helper classes (referenced via reflection/Gson)
--keep class mini.remote.deck.project.hobby.MainViewModel$IdentifyResponse { *; }
--keep class mini.remote.deck.project.hobby.MainViewModel$DiscoveredDevice { *; }
+# 5. Keep ViewModel Constructors
+-keepclassmembers class * extends androidx.lifecycle.ViewModel {
+    <init>(...);
+}
