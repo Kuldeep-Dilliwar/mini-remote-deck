@@ -1,42 +1,27 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# 1. Keep Generic Signatures (CRITICAL for Gson TypeToken)
+-keepattributes Signature
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# 2. Keep Annotation info (Required for @Keep, @SerializedName, etc.)
+-keepattributes *Annotation*
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# 3. Keep standard Gson classes
+-keep class sun.misc.Unsafe { *; }
+-keep class com.google.gson.stream.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# 4. Keep YOUR Data Models
+# This prevents renaming fields like 'name' or 'widgets' to 'a', 'b', etc.
+-keep class mini.remote.deck.project.hobby.RemoteProfile { *; }
+-keep class mini.remote.deck.project.hobby.RemoteWidget { *; }
+-keep class mini.remote.deck.project.hobby.WidgetScript { *; }
+-keep class mini.remote.deck.project.hobby.GridPosition { *; }
+-keep class mini.remote.deck.project.hobby.GridSize { *; }
+-keep class mini.remote.deck.project.hobby.Command { *; }
+-keep class mini.remote.deck.project.hobby.CharacterRequest { *; }
+-keep class mini.remote.deck.project.hobby.ClickRequest { *; }
+-keep class mini.remote.deck.project.hobby.ScrollRequest { *; }
+-keep class mini.remote.deck.project.hobby.HScrollGestureRequest { *; }
+-keep class mini.remote.deck.project.hobby.KeyPressRequest { *; }
+-keep class mini.remote.deck.project.hobby.MediaKeyRequest { *; }
 
-# Suppress warnings for missing classes in BouncyCastle, Conscrypt, and OpenJSSE
--dontwarn org.bouncycastle.jsse.**
--dontwarn org.bouncycastle.jce.provider.**
--dontwarn org.conscrypt.**
--dontwarn org.openjsse.**
-
-
-# Keep model classes from being obfuscated
--keepclassmembers class mini.remote.deck.project.hobby.CharacterRequest {
-    <fields>;
-}
--keepclassmembers class mini.remote.deck.project.hobby.CharacterRequest {
-    <fields>;
-}
--keepclassmembers class mini.remote.deck.project.hobby.CharacterRequest {
-    <fields>;
-}
--keepclassmembers class mini.remote.deck.project.hobby.CharacterRequest {
-    <fields>;
-}
+# 5. Keep IdentifyResponse (used in Scan)
+-keep class mini.remote.deck.project.hobby.MainViewModel$IdentifyResponse { *; }
