@@ -1,8 +1,10 @@
 package mini.remote.deck.project.hobby
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -20,21 +22,112 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.automirrored.filled.Input
+import androidx.compose.material.icons.automirrored.filled.KeyboardReturn
+import androidx.compose.material.icons.automirrored.filled.LastPage
+import androidx.compose.material.icons.automirrored.filled.VolumeDown
+import androidx.compose.material.icons.automirrored.filled.VolumeMute
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.BrightnessHigh
+import androidx.compose.material.icons.filled.BrightnessLow
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DesktopWindows
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardCapslock
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Mouse
+import androidx.compose.material.icons.filled.NetworkCheck
+import androidx.compose.material.icons.filled.Pin
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.SpaceBar
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.SyncLock
+import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material.icons.filled.Window
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,6 +140,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
@@ -59,12 +153,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import mini.remote.deck.project.hobby.ui.theme.MyApplication45Theme
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import mini.remote.deck.project.hobby.ui.theme.MyApplication45Theme
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -74,9 +168,8 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
 import java.io.InputStream
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.TimeUnit
-import kotlin.collections.iterator
 
 
 object ConfigManager {
@@ -1737,7 +1830,6 @@ fun UploadProgressDialog(status: String, progress: Float, onDismiss: () -> Unit)
 }
 
 object FileUploadManager {
-    @RequiresApi(Build.VERSION_CODES.O)
     suspend fun uploadMultipleFiles(
         context: Context,
         fileUris: List<Uri>,
@@ -1754,7 +1846,6 @@ object FileUploadManager {
         onStatusUpdate("Sent $successCount/${fileUris.size} files successfully!")
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("Recycle")
     private suspend fun uploadSingleFile(
         context: Context,
@@ -1797,14 +1888,19 @@ object FileUploadManager {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun getFileName(context: Context, uri: Uri): String {
         var name: String? = null
         if (uri.scheme == "content") {
-            context.contentResolver.query(uri, null, null, null)?.use { cursor ->
-                val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (index != -1 && cursor.moveToFirst()) {
-                    name = cursor.getString(index)
+            val cursor = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.contentResolver.query(uri, null, null, null)
+            } else {
+                context.contentResolver.query(uri, null, null, null, null)
+            }
+
+            cursor?.use { c ->
+                val index = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (index != -1 && c.moveToFirst()) {
+                    name = c.getString(index)
                 }
             }
         }
@@ -1852,26 +1948,28 @@ class ShareReceiverActivity : ComponentActivity() {
     private val uploadStatus = mutableStateOf("Initializing upload...")
     private val uploadProgress = mutableFloatStateOf(0f)
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            processAndUploadFiles(intent)
+        } else {
+            uploadStatus.value = "Storage permission is required to share files on this Android version."
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch {
-            val fileUris: List<Uri>? = when (intent?.action) {
-                Intent.ACTION_SEND -> intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let { listOf(it) }
-                Intent.ACTION_SEND_MULTIPLE -> intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM)
-                else -> null
-            }
 
-            if (!fileUris.isNullOrEmpty()) {
-                FileUploadManager.uploadMultipleFiles(
-                    this@ShareReceiverActivity,
-                    fileUris,
-                    onStatusUpdate = { uploadStatus.value = it },
-                    onProgressUpdate = { uploadProgress.floatValue = it }
-                )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                uploadStatus.value = "Waiting for permission..."
+                requestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
             } else {
-                uploadStatus.value = "Unsupported action or no files found."
+                processAndUploadFiles(intent)
             }
+        } else {
+            processAndUploadFiles(intent)
         }
         setContent {
             MyApplication45Theme {
@@ -1894,6 +1992,27 @@ class ShareReceiverActivity : ComponentActivity() {
                         }
                     }
                 )
+            }
+        }
+    }
+
+    private fun processAndUploadFiles(intent: Intent?) {
+        lifecycleScope.launch {
+            val fileUris: List<Uri>? = when (intent?.action) {
+                Intent.ACTION_SEND -> intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let { listOf(it) }
+                Intent.ACTION_SEND_MULTIPLE -> intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM)
+                else -> null
+            }
+
+            if (!fileUris.isNullOrEmpty()) {
+                FileUploadManager.uploadMultipleFiles(
+                    this@ShareReceiverActivity,
+                    fileUris,
+                    onStatusUpdate = { uploadStatus.value = it },
+                    onProgressUpdate = { uploadProgress.floatValue = it }
+                )
+            } else {
+                uploadStatus.value = "Unsupported action or no files found."
             }
         }
     }
