@@ -1,8 +1,3 @@
-// adding a c server so it can be platform independent and can be ran on older windows version ( tested on windows 7 ultimate ).
-// register itself as startup, creates a shortcut in dextop home, system tray feature, 19KB size.
-// command used to compile this file is
-// x86_64-w64-mingw32-gcc server.c -o RemoteControlServer.exe -lws2_32 -lshell32 -ladvapi32 -luser32 -lole32 -luuid -mwindows -s -Os -ffunction-sections -fdata-sections -Wl,--gc-sections
-
 #include <winsock2.h>
 #include <windows.h>
 #include <shlobj.h>
@@ -22,45 +17,79 @@ char downloads_dir[MAX_PATH];
 int active_port = START_PORT;
 NOTIFYICONDATAA nid;
 
-// --------------- 1. Startup & Directory Setup --------------- //
+// --------------- 1. Installation & Uninstallation --------------- //
 
-void register_startup() {
+void handle_uninstall() {
     HKEY hKey;
-    const char* czStartName = "RemoteControlAppServer";
     char szPathToExe[MAX_PATH];
     GetModuleFileNameA(NULL, szPathToExe, MAX_PATH);
 
+    // 1. Remove from Windows Startup
     if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_WRITE, &hKey) == ERROR_SUCCESS) {
-        RegSetValueExA(hKey, czStartName, 0, REG_SZ, (unsigned char*)szPathToExe, strlen(szPathToExe) + 1);
+        RegDeleteValueA(hKey, "RemoteControlAppServer");
         RegCloseKey(hKey);
+    }
+
+    // 2. Remove from Control Panel (Add/Remove Programs)
+    RegDeleteKeyA(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\RemoteControlAppServer");
+
+    // 3. Delete the Desktop Shortcut
+    char desktop_path[MAX_PATH];
+    if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0, desktop_path))) {
+        char shortcut_path[MAX_PATH];
+        snprintf(shortcut_path, MAX_PATH, "%s\\Remote Downloads.lnk", desktop_path);
+        DeleteFileA(shortcut_path); // Silently deletes if it exists
+    }
+
+    // 4. Self-Delete trick (Spawns a hidden CMD that waits 2 seconds, then deletes this .exe)
+    char cmd_args[MAX_PATH + 100];
+    snprintf(cmd_args, sizeof(cmd_args), "/c ping 127.0.0.1 -n 3 > nul & del /f /q \"%s\"", szPathToExe);
+    ShellExecuteA(NULL, "open", "cmd.exe", cmd_args, NULL, SW_HIDE);
+
+    MessageBoxA(NULL, "Remote Control Server has been completely uninstalled from your system.", "Uninstall Successful", MB_OK | MB_ICONINFORMATION);
+    ExitProcess(0);
+}
+
+void register_installation() {
+    HKEY hKey, hUninst;
+    char szPathToExe[MAX_PATH];
+    GetModuleFileNameA(NULL, szPathToExe, MAX_PATH);
+
+    // Register Startup
+    if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_WRITE, &hKey) == ERROR_SUCCESS) {
+        RegSetValueExA(hKey, "RemoteControlAppServer", 0, REG_SZ, (unsigned char*)szPathToExe, strlen(szPathToExe) + 1);
+        RegCloseKey(hKey);
+    }
+
+    // Register in Control Panel -> Add/Remove Programs
+    if (RegCreateKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\RemoteControlAppServer", 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hUninst, NULL) == ERROR_SUCCESS) {
+        char uninstallCmd[MAX_PATH + 20];
+        snprintf(uninstallCmd, sizeof(uninstallCmd), "\"%s\" --uninstall", szPathToExe);
+        
+        RegSetValueExA(hUninst, "DisplayName", 0, REG_SZ, (unsigned char*)"Remote Control Server", 22);
+        RegSetValueExA(hUninst, "Publisher", 0, REG_SZ, (unsigned char*)"Kuldeep Dilliwar", 17);
+        RegSetValueExA(hUninst, "DisplayIcon", 0, REG_SZ, (unsigned char*)szPathToExe, strlen(szPathToExe) + 1);
+        RegSetValueExA(hUninst, "UninstallString", 0, REG_SZ, (unsigned char*)uninstallCmd, strlen(uninstallCmd) + 1);
+        RegCloseKey(hUninst);
     }
 }
 
 void create_desktop_shortcut() {
     char desktop_path[MAX_PATH];
-    // Get the user's Desktop path
     if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0, desktop_path))) {
         char shortcut_path[MAX_PATH];
         snprintf(shortcut_path, MAX_PATH, "%s\\Remote Downloads.lnk", desktop_path);
 
-        // If shortcut already exists, don't recreate it
-        if (GetFileAttributesA(shortcut_path) != INVALID_FILE_ATTRIBUTES) {
-            return; 
-        }
+        if (GetFileAttributesA(shortcut_path) != INVALID_FILE_ATTRIBUTES) return; 
 
-        // Initialize COM library
         CoInitialize(NULL);
         IShellLinkA* psl;
-        
-        // Create the ShellLink object
         if (SUCCEEDED(CoCreateInstance(&CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, &IID_IShellLinkA, (LPVOID*)&psl))) {
             psl->lpVtbl->SetPath(psl, downloads_dir);
             psl->lpVtbl->SetDescription(psl, "Shortcut to Remote Control Downloads");
-            
             IPersistFile* ppf;
             if (SUCCEEDED(psl->lpVtbl->QueryInterface(psl, &IID_IPersistFile, (LPVOID*)&ppf))) {
                 WCHAR wsz[MAX_PATH];
-                // Convert ANSI path to Wide Char (required by IPersistFile)
                 MultiByteToWideChar(CP_ACP, 0, shortcut_path, -1, wsz, MAX_PATH);
                 ppf->lpVtbl->Save(ppf, wsz, TRUE);
                 ppf->lpVtbl->Release(ppf);
@@ -78,8 +107,6 @@ void setup_directory() {
         CreateDirectoryA(downloads_dir, NULL);
         snprintf(downloads_dir, MAX_PATH, "%s\\RemoteControlApp\\downloads", appdata);
         CreateDirectoryA(downloads_dir, NULL);
-        
-        // After ensuring the directory exists, create the shortcut
         create_desktop_shortcut();
     }
 }
@@ -260,15 +287,21 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     
+    // Check if the user is trying to uninstall
+    if (strstr(lpCmdLine, "--uninstall") != NULL) {
+        handle_uninstall();
+        return 0; // The program exits here during uninstall
+    }
+
     // Check if another instance is already running
     HANDLE hMutex = CreateMutexA(NULL, TRUE, "RemoteControlServer_Unique_Mutex");
     if (GetLastError() == ERROR_ALREADY_EXISTS) {
-        // Another instance is running, close quietly
         CloseHandle(hMutex);
-        return 0;
+        return 0; // Quietly exit if already running
     }
 
-    register_startup();
+    // Write metadata to registry for the Control Panel
+    register_installation();
     setup_directory();
 
     WNDCLASSA wc = {0};
@@ -296,7 +329,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         DispatchMessage(&msg);
     }
 
-    // Release the single-instance lock upon exiting
     CloseHandle(hMutex);
     return 0;
 }
