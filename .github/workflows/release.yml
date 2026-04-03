@@ -30,7 +30,7 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-      
+        
       - name: Install Android SDK 36 and Build Tools
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0-rc1"
 
@@ -63,7 +63,7 @@ jobs:
   # JOB 2: Build Windows Python EXE & ZIP
   # ======================================================
   windows-exe-build:
-    name: Build Windows EXE
+    name: Build Windows EXE (Python)
     runs-on: windows-latest
 
     steps:
@@ -95,5 +95,43 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: python/dist/MiniRemoteDeckServer-Windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ======================================================
+  # JOB 3: Build Legacy Windows EXE (C version)
+  # ======================================================
+  windows-legacy-c-build:
+    name: Build Legacy Windows EXE (C)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install MinGW-w64 Cross-Compiler
+        run: sudo apt-get update && sudo apt-get install -y mingw-w64 zip
+
+      - name: Compile C Server
+        run: |
+          cd C
+          x86_64-w64-mingw32-gcc server.c -o RemoteControlServer-Legacy.exe -lws2_32 -lshell32 -ladvapi32 -luser32 -lole32 -luuid -mwindows -s -Os -ffunction-sections -fdata-sections -Wl,--gc-sections
+
+      - name: Zip the Legacy Executable
+        run: |
+          cd C
+          zip RemoteControlServer-Legacy-Windows.zip RemoteControlServer-Legacy.exe
+
+      - name: Upload Zip to Release and Add Notes
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: C/RemoteControlServer-Legacy-Windows.zip
+          append_body: true
+          body: |
+            
+            ### 🖥️ Legacy Windows Support (C-Server)
+            The `RemoteControlServer-Legacy-Windows.zip` contains a lightweight, compiled C executable designed to run natively on older Windows machines (such as Windows 7). 
+            **⚠️ Important Limitation:** This legacy version *only supports the file transfer feature* and nothing else. It is provided strictly as a fallback alternative to the Python EXE, which requires modern Windows versions to run.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
